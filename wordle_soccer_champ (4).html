@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Futbodle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b6623;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    h1 { margin-bottom: 10px; }
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      grid-gap: 8px;
+      margin: 20px 0;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: bold;
+      text-transform: uppercase;
+      background: #1e1e1e;
+    }
+    .correct { background: #2ecc71; }
+    .present { background: #f1c40f; }
+    .absent { background: #7f8c8d; }
+    input {
+      font-size: 18px;
+      padding: 10px;
+      text-transform: uppercase;
+      width: 200px;
+      text-align: center;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #message { margin-top: 15px; font-size: 18px; }
+  </style>
+</head>
+<body>
+  <!-- Pantalla de inicio superpuesta -->
+  <div id="intro" style="position:fixed; inset:0; background:#0b6623; display:flex; align-items:center; justify-content:center; z-index:10;">
+    <div style="text-align:center; max-width:400px;">
+      <h1>⚽ FUTBODLE ⚽</h1>
+      <p>Adivina el jugador de fútbol de <b>5 letras</b>.<br>Hay uno nuevo cada día.</p>
+
+      <div style="margin:20px 0; text-align:left;">
+        <div style="display:flex; align-items:center; margin-bottom:10px;">
+          <div class="cell correct">M</div>
+          <span style="margin-left:10px;">Letra correcta y posición correcta</span>
+        </div>
+        <div style="display:flex; align-items:center; margin-bottom:10px;">
+          <div class="cell present">A</div>
+          <span style="margin-left:10px;">Letra correcta, posición incorrecta</span>
+        </div>
+        <div style="display:flex; align-items:center;">
+          <div class="cell absent">R</div>
+          <span style="margin-left:10px;">Letra incorrecta</span>
+        </div>
+      </div>
+
+      <button onclick="startGame()" style="font-size:20px; padding:15px 30px;">¡Empezar juego!</button>
+    </div>
+  </div>
+
+  <h1>⚽ FUTBODLE ⚽</h1>
+  <p>El jugador cambia cada día (5 letras)</p>
+
+  <div id="grid"></div>
+
+  <input id="guess" maxlength="5" placeholder="Escribe el jugador" />
+  <button onclick="submitGuess()">Probar</button>
+
+  <div id="message"></div>
+
+  <script>
+    // Lista grande de jugadores de 5 letras (ejemplos, se pueden seguir agregando)
+    const words = [
+      "MESSI","SALAH","PEDRI","GOMEZ","FIGAL","FABRA","PAVON","ROJAS",
+      "KANTE","RAMOS","NAVAS","ISCOO","FODEN","ALABA","OSCAR","REYNA",
+      "RODRI","PUYOL","PIQUE","ACUÑA","COMAN","CASCO","KROOS","BORJA",
+      "JESUS","BRUNO","NEUER","ARIAS","NACHO","ALVES","PEREZ","TEVEZ",
+      "YAMAL","NESTA","PIRLO","GULER","GODIN","VIVAS","BERTI","BORRE",
+      "SALAS","PIZZI","FABRI","CAGNA","VILLA","INSUA","MEDEL","VIDAL",
+      "PEREA","KARIM","DUNGA","AMATO","SILVA","SORIN","ORION","DEPAY",
+      "FELIX","BARCO","ISLAS","RUBEN","OLAVE","ROSSI","SESSA","GATTI",
+      "AYALA","ROMAN","FARRE","ORTIZ","CETRE","MUSTO","TOBIO","ERROS",
+      "WIRTZ","OBLAK","HENRY","URIVE","TERRY","GIGGS","BLANC","SERNA",
+      "GOMEZ","HARRY","BALDE","SERGI","MOTTA","BRAVO","TOTTI","GANSO"
+    ];
+
+    // Día base (1 de enero de 2024)
+    const baseDate = new Date(2024, 0, 1);
+    const today = new Date();
+    const diffDays = Math.floor((today - baseDate) / (1000 * 60 * 60 * 24));
+
+    // Palabra del día (si se termina la lista, vuelve a empezar)
+    const secret = words[diffDays % words.length];
+
+    let attempts = 0;
+    const maxAttempts = 6;
+    const grid = document.getElementById("grid");
+
+    function createRow() {
+      for (let i = 0; i < 5; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        grid.appendChild(cell);
+      }
+    }
+
+    for (let i = 0; i < maxAttempts; i++) createRow();
+
+    function submitGuess() {
+      const input = document.getElementById("guess");
+      let guess = input.value.toUpperCase();
+
+      if (guess.length !== 5) {
+        showMessage("Debe tener 5 letras");
+        return;
+      }
+
+      // Validar que sea un jugador profesional
+      if (!words.includes(guess)) {
+        showMessage("Jugador no válido ❌");
+        return;
+      }
+
+      if (attempts >= maxAttempts) return;
+
+      const rowStart = attempts * 5;
+      for (let i = 0; i < 5; i++) {
+        const cell = grid.children[rowStart + i];
+        cell.textContent = guess[i];
+
+        if (guess[i] === secret[i]) {
+          cell.classList.add("correct");
+        } else if (secret.includes(guess[i])) {
+          cell.classList.add("present");
+        } else {
+          cell.classList.add("absent");
+        }
+      }
+
+      if (guess === secret) {
+        showMessage("¡Golazo! Volvé mañana para un nuevo jugador ⚽");
+      } else if (attempts === maxAttempts - 1) {
+        showMessage("Perdiste 😢 El jugador de hoy era: " + secret);
+      }
+
+      attempts++;
+      input.value = "";
+    }
+
+        function startGame() {
+      document.getElementById("intro").style.display = "none";
+    }
+
+    function showMessage(msg) {
+      document.getElementById("message").textContent = msg;
+    }
+      function startGame() {
+      document.getElementById("intro").style.display = "none";
+      document.getElementById("game").style.display = "flex";
+    }
+  </script>
+</body>
+</html>
